@@ -6,8 +6,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-FRET_FACTOR = 17.81715
-MM_TO_PIXEL = 3.7795275595
+FRET_FACTOR = 17.817154
+MM_TO_PIXEL_GLOBAL = 3.7795275595
+
+# Factor of incorrectness when using the pixel conversion
+WEIRDNESS_FACTOR = 1.3338508981906796
+
+MM_TO_PIXEL = MM_TO_PIXEL_GLOBAL / WEIRDNESS_FACTOR
 
 @dataclass
 class Config:
@@ -49,7 +54,7 @@ def main():
     config = Config(
         num_strings = 7,
         long_scale_length = 673.1,
-        short_scale_length = 643.1,
+        short_scale_length = 647.7,
         number_of_frets = 24,
         neutral_fret = 7,
         string_spacing_at_nut = 7.167,
@@ -71,7 +76,7 @@ def main():
     
     # Get plot dimensions
     plot_width = abs(round(long_scale_coordinates[-1][0] * 1.2 * MM_TO_PIXEL))
-    plot_height = abs(round(long_scale_coordinates[-1][1] * 2.5 * MM_TO_PIXEL))
+    plot_height = abs(round(long_scale_coordinates[-1][1] * 3 * MM_TO_PIXEL))
     centerline_height = plot_height * 0.5
     x_offset = plot_width * 0.1
 
