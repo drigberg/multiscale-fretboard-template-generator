@@ -5,13 +5,14 @@ from PIL import ImageDraw
 import matplotlib.pyplot as plt
 import numpy as np
 
-
+# Standard factor for determining the distance between frets 0 and 1
 FRET_FACTOR = 17.817154
-MM_TO_PIXEL_GLOBAL = 3.7795275595
 
+# The "official" conversion factor from millimeters to pixels
+MM_TO_PIXEL_GLOBAL = 3.7795275595
 # Factor of incorrectness when using the pixel conversion
 WEIRDNESS_FACTOR = 1.3338508981906796
-
+# Our conversion factor
 MM_TO_PIXEL = MM_TO_PIXEL_GLOBAL / WEIRDNESS_FACTOR
 
 @dataclass
@@ -24,6 +25,7 @@ class Config:
     string_spacing_at_nut: float 
     string_spacing_at_bridge: float 
 
+# Finds each fret's distance from fret 0 by iteratively applying the fret factor
 def get_fret_positions_along_string(config: Config, scale_length: float) -> np.array:
     fret_positions = [0]
     remaining_scale_length = scale_length
@@ -33,6 +35,7 @@ def get_fret_positions_along_string(config: Config, scale_length: float) -> np.a
         remaining_scale_length -= delta
     return np.array(fret_positions)
 
+# Pairs each fret's distance from fret 0 with its distance from the centerline
 def get_coordinates_for_scale(config: Config, is_long_scale: bool) -> np.array:
     scale_length = config.long_scale_length if is_long_scale is True else config.short_scale_length 
     fret_positions = get_fret_positions_along_string(config, scale_length)
@@ -60,6 +63,8 @@ def main():
         string_spacing_at_nut = 7.167,
         string_spacing_at_bridge = 10.5
     )
+
+    # Get all fret coordinates
     long_scale_coordinates = get_coordinates_for_scale(
         config=config,
         is_long_scale=True
