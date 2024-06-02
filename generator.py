@@ -19,21 +19,14 @@ class Config:
     string_spacing_at_nut: float 
     string_spacing_at_bridge: float 
 
-@dataclass
-class FretPositions:
-    fret_positions: np.array
-    deltas: np.array
-
-def get_fret_positions_along_string(config: Config, scale_length: float) -> FretPositions:
-    deltas = [0]
+def get_fret_positions_along_string(config: Config, scale_length: float) -> np.array:
     fret_positions = [0]
     remaining_scale_length = scale_length
     for i in range(config.number_of_frets):
         delta = remaining_scale_length / FRET_FACTOR
-        deltas.append(delta)
         fret_positions.append(fret_positions[-1] + delta)
         remaining_scale_length -= delta
-    return FretPositions(deltas=np.array(deltas), fret_positions=np.array(fret_positions))
+    return np.array(fret_positions)
 
 def get_coordinates_for_scale(config: Config, is_long_scale: bool) -> np.array:
     scale_length = config.long_scale_length if is_long_scale is True else config.short_scale_length 
@@ -47,10 +40,10 @@ def get_coordinates_for_scale(config: Config, is_long_scale: bool) -> np.array:
     multiplier = -1 if is_long_scale else 1
     distances_from_centerline = [distance_at_nut * multiplier]
     for i in range(config.number_of_frets):
-        distance_from_nut = fret_positions.fret_positions[i + 1]
+        distance_from_nut = fret_positions[i + 1]
         distances_from_centerline.append((distance_at_nut + max_delta * distance_from_nut / scale_length) * multiplier)
     
-    return np.vstack((fret_positions.fret_positions, distances_from_centerline)).T
+    return np.vstack((fret_positions, distances_from_centerline)).T
 
 def main():
     config = Config(
@@ -71,18 +64,20 @@ def main():
         is_long_scale=False
     )
 
+    # Align to neutral fret
     short_scale_offset = long_scale_coordinates[config.neutral_fret][0] - short_scale_coordinates[config.neutral_fret][0]
     for i in range(config.number_of_frets + 1):
         short_scale_coordinates[i][0] += short_scale_offset
     
+    # Get plot dimensions
     plot_width = abs(round(long_scale_coordinates[-1][0] * 1.2 * MM_TO_PIXEL))
     plot_height = abs(round(long_scale_coordinates[-1][1] * 2.5 * MM_TO_PIXEL))
-
-    image = Image.new('RGBA', (plot_width, plot_height), (255,255,255,255))
-    draw = ImageDraw.Draw(image)
-
     centerline_height = plot_height * 0.5
     x_offset = plot_width * 0.1
+
+    # Init image
+    image = Image.new('RGBA', (plot_width, plot_height), (255,255,255,255))
+    draw = ImageDraw.Draw(image)
 
     # Draw centerline
     draw.line(((0, centerline_height), (plot_width, centerline_height)), fill=(0, 0, 0, 125), width=1)
@@ -130,11 +125,10 @@ def main():
             width=1
         )
 
-    print(long_scale_coordinates)
+    # Export
     print("Saving image...")
     image.save("output.png", "PNG")
     print(f"Saved image to output.png ({image.width}x{image.height})")
-
 
 if __name__ == '__main__':
     main()
