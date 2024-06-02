@@ -7,8 +7,7 @@ import numpy as np
 
 
 FRET_FACTOR = 17.81715
-PIXEL_TO_MM = 3.77953
-# PIXEL_TO_MM = 1
+MM_TO_PIXEL = 3.7795275595
 
 @dataclass
 class Config:
@@ -45,7 +44,7 @@ def get_coordinates_for_scale(config: Config, is_long_scale: bool) -> np.array:
     distance_at_bridge = num_string_spacings_from_centerline * config.string_spacing_at_bridge
     max_delta = distance_at_bridge - distance_at_nut
 
-    multiplier = 1 if is_long_scale else -1
+    multiplier = -1 if is_long_scale else 1
     distances_from_centerline = [distance_at_nut * multiplier]
     for i in range(config.number_of_frets):
         distance_from_nut = fret_positions.fret_positions[i + 1]
@@ -76,8 +75,8 @@ def main():
     for i in range(config.number_of_frets + 1):
         short_scale_coordinates[i][0] += short_scale_offset
     
-    plot_width = round(long_scale_coordinates[-1][0] * 1.2 * PIXEL_TO_MM) 
-    plot_height = round(long_scale_coordinates[-1][1] * 2.5 * PIXEL_TO_MM) 
+    plot_width = abs(round(long_scale_coordinates[-1][0] * 1.2 * MM_TO_PIXEL))
+    plot_height = abs(round(long_scale_coordinates[-1][1] * 2.5 * MM_TO_PIXEL))
 
     image = Image.new('RGBA', (plot_width, plot_height), (255,255,255,255))
     draw = ImageDraw.Draw(image)
@@ -91,24 +90,24 @@ def main():
     # Draw strings
     draw.line((
         (
-            long_scale_coordinates[0][0] * PIXEL_TO_MM + x_offset,
-            long_scale_coordinates[0][1] * PIXEL_TO_MM + centerline_height
+            long_scale_coordinates[0][0] * MM_TO_PIXEL + x_offset,
+            long_scale_coordinates[0][1] * MM_TO_PIXEL + centerline_height
         ),
         (
-            long_scale_coordinates[-1][0] * PIXEL_TO_MM + x_offset,
-            long_scale_coordinates[-1][1] * PIXEL_TO_MM + centerline_height
+            long_scale_coordinates[-1][0] * MM_TO_PIXEL + x_offset,
+            long_scale_coordinates[-1][1] * MM_TO_PIXEL + centerline_height
         )),
         fill=(0, 0, 0, 125),
         width=1
     )
     draw.line((
         (
-            short_scale_coordinates[0][0] * PIXEL_TO_MM + x_offset,
-            short_scale_coordinates[0][1] * PIXEL_TO_MM + centerline_height
+            short_scale_coordinates[0][0] * MM_TO_PIXEL + x_offset,
+            short_scale_coordinates[0][1] * MM_TO_PIXEL + centerline_height
         ),
         (
-            short_scale_coordinates[-1][0] * PIXEL_TO_MM + x_offset,
-            short_scale_coordinates[-1][1] * PIXEL_TO_MM + centerline_height
+            short_scale_coordinates[-1][0] * MM_TO_PIXEL + x_offset,
+            short_scale_coordinates[-1][1] * MM_TO_PIXEL + centerline_height
         )),
         fill=(0, 0, 0, 125),
         width=1
@@ -119,24 +118,22 @@ def main():
         draw.line(
             (
                 (
-                    (long_scale_coordinates[i][0] * PIXEL_TO_MM + x_offset) ,
-                    (long_scale_coordinates[i][1] * PIXEL_TO_MM + centerline_height) 
+                    (long_scale_coordinates[i][0] * MM_TO_PIXEL + x_offset) ,
+                    (long_scale_coordinates[i][1] * MM_TO_PIXEL + centerline_height) 
                 ),
                 (
-                    (short_scale_coordinates[i][0] * PIXEL_TO_MM + x_offset),
-                    (short_scale_coordinates[i][1] * PIXEL_TO_MM + centerline_height) 
+                    (short_scale_coordinates[i][0] * MM_TO_PIXEL + x_offset),
+                    (short_scale_coordinates[i][1] * MM_TO_PIXEL + centerline_height) 
                 ),
             ),
             fill=(0, 0, 0, 255),
             width=1
         )
 
+    print(long_scale_coordinates)
     print("Saving image...")
-    plt.axis('off')
-    plt.imshow(np.asarray(image), origin='lower')
-    plt.gcf().set_size_inches(plot_width / PIXEL_TO_MM / 25.4, plot_height / PIXEL_TO_MM / 25.4)
-    plt.savefig('output.png', dpi=200)
-    print(f"Saved image to output.png (width={plot_width}, height={plot_height})")
+    image.save("output.png", "PNG")
+    print(f"Saved image to output.png ({image.width}x{image.height})")
 
 
 if __name__ == '__main__':
