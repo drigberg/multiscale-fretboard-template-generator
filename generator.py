@@ -94,7 +94,7 @@ def main():
     draw = ImageDraw.Draw(image)
 
     # Draw centerline
-    draw.line(((0, centerline_height), (plot_width, centerline_height)), fill=(0, 0, 0, 125), width=1)
+    draw.line(((0, centerline_height), (plot_width, centerline_height)), fill=(0, 0, 0, 255), width=1)
 
     # Draw strings
     if config.draw_strings and config.as_points is False:
@@ -108,7 +108,7 @@ def main():
                     scale_coordinates[-1][0] * MM_TO_PIXEL + x_offset,
                     scale_coordinates[-1][1] * MM_TO_PIXEL + centerline_height
                 )),
-                fill=(0, 0, 0, 125),
+                fill=(0, 0, 0, 255),
                 width=1
             )
 
@@ -123,7 +123,7 @@ def main():
             draw.point((x1, y1), fill=(0, 0, 0, 255))
             draw.point((x2, y2), fill=(0, 0, 0, 255))  
         else:
-            draw.line(((x1, y1), (x2, y2)), fill=(0, 0, 0, 50), width=1)
+            draw.line(((x1, y1), (x2, y2)), fill=(0, 0, 0, 255), width=1)
 
     # Export
     print("Saving image...")
