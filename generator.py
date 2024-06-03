@@ -7,6 +7,7 @@ from PIL import ImageDraw
 import numpy as np
 
 # Standard factor for determining the distance between frets 0 and 1
+# Source: https://www.stewmac.com/video-and-ideas/online-resources/learn-about-guitar-and-instrument-fretting-and-fretwork/fret-scale-rule-instructions/
 FRET_FACTOR = 17.817154
 
 # The "official" conversion factor from millimeters to pixels
@@ -30,12 +31,6 @@ config_schema = Schema(
 )
 
 @dataclass
-class Mode:
-    label: str
-    as_points: bool
-    draw_strings: bool = False
-
-@dataclass
 class Config:
     left_handed: bool
     num_strings: int
@@ -45,6 +40,18 @@ class Config:
     neutral_fret: int
     string_spacing_at_nut: float 
     string_spacing_at_bridge: float
+
+@dataclass
+class ExportMode:
+    label: str
+    as_points: bool
+    draw_strings: bool = False
+
+EXPORT_MODES = [
+    ExportMode(label='lines-with-strings', as_points=False, draw_strings=True),
+    ExportMode(label='lines-without-strings', as_points=False, draw_strings=False),
+    ExportMode(label='only-points', as_points=True)
+]
 
 def load_config() -> Config:
     with open("config.yml") as stream:
@@ -114,12 +121,7 @@ def main():
     centerline_height = plot_height * 0.5
     x_offset = plot_width * 0.1
 
-    modes = [
-        Mode(label='lines-with-strings', as_points=False, draw_strings=True),
-        Mode(label='lines-without-strings', as_points=False, draw_strings=False),
-        Mode(label='only-points', as_points=True)
-    ]
-    for mode in modes:
+    for export_mode in EXPORT_MODES:
         # Init image
         image = Image.new('RGBA', (plot_width, plot_height), (255,255,255,255))
         draw = ImageDraw.Draw(image)
@@ -135,7 +137,7 @@ def main():
             return (x, y)
 
         # Draw strings
-        if mode.draw_strings:
+        if export_mode.draw_strings:
             for scale_coordinates in [long_scale_coords, short_scale_coords]:
                 draw.line((get_xy(scale_coordinates[0]), get_xy(scale_coordinates[-1])), fill=(0, 0, 0, 255), width=1)
 
@@ -143,7 +145,7 @@ def main():
         for i in range(config.number_of_frets + 1): 
             long_scale_xy = get_xy(long_scale_coords[i])
             short_scale_xy = get_xy(short_scale_coords[i])            
-            if mode.as_points:
+            if export_mode.as_points:
                 draw.point(long_scale_xy, fill=(0, 0, 0, 255))
                 draw.point(short_scale_xy, fill=(0, 0, 0, 255))  
             else:
@@ -151,7 +153,7 @@ def main():
 
         # Export
         print("Saving image...")
-        filename = f"output/{mode.label}.png"
+        filename = f"output/{export_mode.label}.png"
         image.save(filename, "PNG")
         print(f"Saved image to {filename} ({image.width}x{image.height})")
 
