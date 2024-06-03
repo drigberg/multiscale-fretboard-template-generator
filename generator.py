@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from schema import Schema, Or
+from schema import Schema, And, Or
 import yaml
 
 from PIL import Image
@@ -18,6 +18,7 @@ MM_TO_PIXEL = MM_TO_PIXEL_GLOBAL / WEIRDNESS_FACTOR
 
 config_schema = Schema(
     {
+        'left_handed': And(bool),
         'num_strings': Or(int, float),
         'number_of_frets': Or(int, float),
         'long_scale_length': And(float),
@@ -36,6 +37,7 @@ class Mode:
 
 @dataclass
 class Config:
+    left_handed: bool
     num_strings: int
     number_of_frets: int
     long_scale_length: float
@@ -49,6 +51,7 @@ def load_config() -> Config:
         data = yaml.safe_load(stream)
     config_schema.validate(data)
     return Config(
+        left_handed=data['left_handed'],
         num_strings=int(data['num_strings']),
         number_of_frets=int(data['number_of_frets']),
         long_scale_length=data['long_scale_length'],
@@ -91,23 +94,23 @@ def main():
     config = load_config()
 
     # Get all fret coordinates
-    long_scale_coordinates = get_coordinates_for_scale(
+    long_scale_coords = get_coordinates_for_scale(
         config=config,
         is_long_scale=True
     )
-    short_scale_coordinates = get_coordinates_for_scale(
+    short_scale_coords = get_coordinates_for_scale(
         config=config,
         is_long_scale=False
     )
 
     # Align to neutral fret
-    short_scale_offset = long_scale_coordinates[config.neutral_fret][0] - short_scale_coordinates[config.neutral_fret][0]
+    short_scale_offset = long_scale_coords[config.neutral_fret][0] - short_scale_coords[config.neutral_fret][0]
     for i in range(config.number_of_frets + 1):
-        short_scale_coordinates[i][0] += short_scale_offset
+        short_scale_coords[i][0] += short_scale_offset
     
     # Get plot dimensions
-    plot_width = abs(round(long_scale_coordinates[-1][0] * 1.2 * MM_TO_PIXEL))
-    plot_height = abs(round(long_scale_coordinates[-1][1] * 3 * MM_TO_PIXEL))
+    plot_width = abs(round(long_scale_coords[-1][0] * 1.2 * MM_TO_PIXEL))
+    plot_height = abs(round(long_scale_coords[-1][1] * 3 * MM_TO_PIXEL))
     centerline_height = plot_height * 0.5
     x_offset = plot_width * 0.1
 
@@ -123,37 +126,28 @@ def main():
 
         # Draw centerline
         draw.line(((0, centerline_height), (plot_width, centerline_height)), fill=(0, 0, 0, 255), width=1)
-
-        def get_x(x: float) -> float:
-            return plot_width - (x * MM_TO_PIXEL + x_offset)
-
-        def get_y(y: float) -> float:
-            return y * MM_TO_PIXEL + centerline_height
+        
+        def get_xy(coords: np.array) -> tuple[float]:
+            x = coords[0] * MM_TO_PIXEL + x_offset
+            if not config.left_handed: 
+                x = plot_width - x
+            y = coords[1] * MM_TO_PIXEL + centerline_height
+            return (x, y)
 
         # Draw strings
         if mode.draw_strings:
-            for scale_coordinates in [long_scale_coordinates, short_scale_coordinates]:
-                draw.line(
-                    (
-                        (get_x(scale_coordinates[0][0]), get_y(scale_coordinates[0][1])),
-                        (get_x(scale_coordinates[-1][0]), get_y(scale_coordinates[-1][1]))
-                    ),
-                    fill=(0, 0, 0, 255),
-                    width=1
-                )
+            for scale_coordinates in [long_scale_coords, short_scale_coords]:
+                draw.line((get_xy(scale_coordinates[0]), get_xy(scale_coordinates[-1])), fill=(0, 0, 0, 255), width=1)
 
         # Draw frets
-        for i in range(config.number_of_frets + 1):
-            x1 = get_x(long_scale_coordinates[i][0])
-            y1 = get_y(long_scale_coordinates[i][1]) 
-            x2 = get_x(short_scale_coordinates[i][0])
-            y2 = get_y(short_scale_coordinates[i][1]) 
-            
+        for i in range(config.number_of_frets + 1): 
+            long_scale_xy = get_xy(long_scale_coords[i])
+            short_scale_xy = get_xy(short_scale_coords[i])            
             if mode.as_points:
-                draw.point((x1, y1), fill=(0, 0, 0, 255))
-                draw.point((x2, y2), fill=(0, 0, 0, 255))  
+                draw.point(long_scale_xy, fill=(0, 0, 0, 255))
+                draw.point(short_scale_xy, fill=(0, 0, 0, 255))  
             else:
-                draw.line(((x1, y1), (x2, y2)), fill=(0, 0, 0, 255), width=1)
+                draw.line((long_scale_xy, short_scale_xy), fill=(0, 0, 0, 255), width=1)
 
         # Export
         print("Saving image...")
