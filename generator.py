@@ -16,6 +16,12 @@ WEIRDNESS_FACTOR = 1.3338508981906796
 MM_TO_PIXEL = MM_TO_PIXEL_GLOBAL / WEIRDNESS_FACTOR
 
 @dataclass
+class Mode:
+    label: str
+    as_points: bool
+    draw_strings: bool = False
+
+@dataclass
 class Config:
     num_strings: int
     number_of_frets: int
@@ -24,8 +30,6 @@ class Config:
     neutral_fret: int
     string_spacing_at_nut: float 
     string_spacing_at_bridge: float
-    draw_strings: bool
-    as_points: bool
 
 # Finds each fret's distance from fret 0 by iteratively applying the fret factor
 def get_fret_positions_along_string(config: Config, scale_length: float) -> np.array:
@@ -47,6 +51,7 @@ def get_coordinates_for_scale(config: Config, is_long_scale: bool) -> np.array:
     distance_at_bridge = num_string_spacings_from_centerline * config.string_spacing_at_bridge
     max_delta = distance_at_bridge - distance_at_nut
 
+    # draw long scale above centerline
     multiplier = -1 if is_long_scale else 1
     distances_from_centerline = [distance_at_nut * multiplier]
     for i in range(config.number_of_frets):
@@ -64,8 +69,6 @@ def main():
         neutral_fret=7,
         string_spacing_at_nut=7.167,
         string_spacing_at_bridge=10.5,
-        draw_strings=True,
-        as_points=False
     )
 
     # Get all fret coordinates
@@ -89,46 +92,53 @@ def main():
     centerline_height = plot_height * 0.5
     x_offset = plot_width * 0.1
 
-    # Init image
-    image = Image.new('RGBA', (plot_width, plot_height), (255,255,255,255))
-    draw = ImageDraw.Draw(image)
+    modes = [
+        Mode(label='lines-with-strings', as_points=False, draw_strings=True),
+        Mode(label='lines-without-strings', as_points=False, draw_strings=False),
+        Mode(label='only-points', as_points=True)
+    ]
+    for mode in modes:
+        # Init image
+        image = Image.new('RGBA', (plot_width, plot_height), (255,255,255,255))
+        draw = ImageDraw.Draw(image)
 
-    # Draw centerline
-    draw.line(((0, centerline_height), (plot_width, centerline_height)), fill=(0, 0, 0, 255), width=1)
+        # Draw centerline
+        draw.line(((0, centerline_height), (plot_width, centerline_height)), fill=(0, 0, 0, 255), width=1)
 
-    # Draw strings
-    if config.draw_strings and config.as_points is False:
-        for scale_coordinates in [long_scale_coordinates, short_scale_coordinates]:
-            draw.line((
-                (
-                    scale_coordinates[0][0] * MM_TO_PIXEL + x_offset,
-                    scale_coordinates[0][1] * MM_TO_PIXEL + centerline_height
-                ),
-                (
-                    scale_coordinates[-1][0] * MM_TO_PIXEL + x_offset,
-                    scale_coordinates[-1][1] * MM_TO_PIXEL + centerline_height
-                )),
-                fill=(0, 0, 0, 255),
-                width=1
-            )
+        # Draw strings
+        if mode.draw_strings:
+            for scale_coordinates in [long_scale_coordinates, short_scale_coordinates]:
+                draw.line((
+                    (
+                        scale_coordinates[0][0] * MM_TO_PIXEL + x_offset,
+                        scale_coordinates[0][1] * MM_TO_PIXEL + centerline_height
+                    ),
+                    (
+                        scale_coordinates[-1][0] * MM_TO_PIXEL + x_offset,
+                        scale_coordinates[-1][1] * MM_TO_PIXEL + centerline_height
+                    )),
+                    fill=(0, 0, 0, 255),
+                    width=1
+                )
 
-    # Draw frets
-    for i in range(config.number_of_frets + 1):
-        x1 = (long_scale_coordinates[i][0] * MM_TO_PIXEL + x_offset)
-        y1 = (long_scale_coordinates[i][1] * MM_TO_PIXEL + centerline_height) 
-        x2 = (short_scale_coordinates[i][0] * MM_TO_PIXEL + x_offset)
-        y2 = (short_scale_coordinates[i][1] * MM_TO_PIXEL + centerline_height) 
-        
-        if config.as_points:
-            draw.point((x1, y1), fill=(0, 0, 0, 255))
-            draw.point((x2, y2), fill=(0, 0, 0, 255))  
-        else:
-            draw.line(((x1, y1), (x2, y2)), fill=(0, 0, 0, 255), width=1)
+        # Draw frets
+        for i in range(config.number_of_frets + 1):
+            x1 = (long_scale_coordinates[i][0] * MM_TO_PIXEL + x_offset)
+            y1 = (long_scale_coordinates[i][1] * MM_TO_PIXEL + centerline_height) 
+            x2 = (short_scale_coordinates[i][0] * MM_TO_PIXEL + x_offset)
+            y2 = (short_scale_coordinates[i][1] * MM_TO_PIXEL + centerline_height) 
+            
+            if mode.as_points:
+                draw.point((x1, y1), fill=(0, 0, 0, 255))
+                draw.point((x2, y2), fill=(0, 0, 0, 255))  
+            else:
+                draw.line(((x1, y1), (x2, y2)), fill=(0, 0, 0, 255), width=1)
 
-    # Export
-    print("Saving image...")
-    image.save("output.png", "PNG")
-    print(f"Saved image to output.png ({image.width}x{image.height})")
+        # Export
+        print("Saving image...")
+        filename = f"output/{mode.label}.png"
+        image.save(filename, "PNG")
+        print(f"Saved image to {filename} ({image.width}x{image.height})")
 
 if __name__ == '__main__':
     main()
