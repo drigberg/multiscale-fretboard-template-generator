@@ -115,7 +115,7 @@ def main():
     for i in range(config.number_of_frets + 1):
         short_scale_coords[i][0] += short_scale_offset
     
-    # Get plot dimensions
+    # Get plot dimensions, with buffer around frets
     plot_width = abs(round(long_scale_coords[-1][0] * 1.2 * MM_TO_PIXEL))
     plot_height = abs(round(long_scale_coords[-1][1] * 3 * MM_TO_PIXEL))
     centerline_height = plot_height * 0.5
