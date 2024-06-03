@@ -105,28 +105,30 @@ def main():
         # Draw centerline
         draw.line(((0, centerline_height), (plot_width, centerline_height)), fill=(0, 0, 0, 255), width=1)
 
+        def get_x(x: float) -> float:
+            return plot_width - (x * MM_TO_PIXEL + x_offset)
+
+        def get_y(y: float) -> float:
+            return y * MM_TO_PIXEL + centerline_height
+
         # Draw strings
         if mode.draw_strings:
             for scale_coordinates in [long_scale_coordinates, short_scale_coordinates]:
-                draw.line((
+                draw.line(
                     (
-                        scale_coordinates[0][0] * MM_TO_PIXEL + x_offset,
-                        scale_coordinates[0][1] * MM_TO_PIXEL + centerline_height
+                        (get_x(scale_coordinates[0][0]), get_y(scale_coordinates[0][1])),
+                        (get_x(scale_coordinates[-1][0]), get_y(scale_coordinates[-1][1]))
                     ),
-                    (
-                        scale_coordinates[-1][0] * MM_TO_PIXEL + x_offset,
-                        scale_coordinates[-1][1] * MM_TO_PIXEL + centerline_height
-                    )),
                     fill=(0, 0, 0, 255),
                     width=1
                 )
 
         # Draw frets
         for i in range(config.number_of_frets + 1):
-            x1 = (long_scale_coordinates[i][0] * MM_TO_PIXEL + x_offset)
-            y1 = (long_scale_coordinates[i][1] * MM_TO_PIXEL + centerline_height) 
-            x2 = (short_scale_coordinates[i][0] * MM_TO_PIXEL + x_offset)
-            y2 = (short_scale_coordinates[i][1] * MM_TO_PIXEL + centerline_height) 
+            x1 = get_x(long_scale_coordinates[i][0])
+            y1 = get_y(long_scale_coordinates[i][1]) 
+            x2 = get_x(short_scale_coordinates[i][0])
+            y2 = get_y(short_scale_coordinates[i][1]) 
             
             if mode.as_points:
                 draw.point((x1, y1), fill=(0, 0, 0, 255))
