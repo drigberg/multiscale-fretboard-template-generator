@@ -17,10 +17,10 @@ python3 -m pipenv run generator
 The script generates three templates:
 
 **Frets as lines, with outer strings:**
-![alt text](output/lines-with-strings.png)
+![Frets as lines, with strings](examples/lines-with-strings.png)
 
 **Frets as lines, without strings:**
-![alt text](output/lines-without-strings.png)
+![Frets as lines, without strings](examples/lines-without-strings.png)
 
 **String/fret intersection points:**
-![alt text](output/only-points.png)
+![String/fret intersection points](examples/only-points.png)
