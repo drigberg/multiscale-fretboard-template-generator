@@ -1,9 +1,9 @@
 from dataclasses import dataclass
+from schema import Schema, Or
 import yaml
 
 from PIL import Image
 from PIL import ImageDraw
-import matplotlib.pyplot as plt
 import numpy as np
 
 # Standard factor for determining the distance between frets 0 and 1
@@ -15,6 +15,18 @@ MM_TO_PIXEL_GLOBAL = 3.7795275595
 WEIRDNESS_FACTOR = 1.3338508981906796
 # Our conversion factor
 MM_TO_PIXEL = MM_TO_PIXEL_GLOBAL / WEIRDNESS_FACTOR
+
+config_schema = Schema(
+    {
+        'num_strings': Or(int, float),
+        'number_of_frets': Or(int, float),
+        'long_scale_length': And(float),
+        'short_scale_length': And(float),
+        'neutral_fret': Or(int, float),
+        'string_spacing_at_nut': And(float),
+        'string_spacing_at_bridge': And(float)
+    }
+)
 
 @dataclass
 class Mode:
@@ -35,21 +47,13 @@ class Config:
 def load_config() -> Config:
     with open("config.yml") as stream:
         data = yaml.safe_load(stream)
-
-    assert isinstance(data['num_strings'], int)
-    assert isinstance(data['number_of_frets'], int)
-    assert isinstance(data['long_scale_length'], float)
-    assert isinstance(data['short_scale_length'], float)
-    assert isinstance(data['neutral_fret'], int)
-    assert isinstance(data['string_spacing_at_nut'], float)
-    assert isinstance(data['string_spacing_at_bridge'], float)
-
+    config_schema.validate(data)
     return Config(
-        num_strings=data['num_strings'],
-        number_of_frets=data['number_of_frets'],
+        num_strings=int(data['num_strings']),
+        number_of_frets=int(data['number_of_frets']),
         long_scale_length=data['long_scale_length'],
         short_scale_length=data['short_scale_length'],
-        neutral_fret=data['neutral_fret'],
+        neutral_fret=int(data['neutral_fret']),
         string_spacing_at_nut=data['string_spacing_at_nut'],
         string_spacing_at_bridge=data['string_spacing_at_bridge']
     )
