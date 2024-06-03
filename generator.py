@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import yaml
 
 from PIL import Image
 from PIL import ImageDraw
@@ -31,6 +32,28 @@ class Config:
     string_spacing_at_nut: float 
     string_spacing_at_bridge: float
 
+def load_config() -> Config:
+    with open("config.yml") as stream:
+        data = yaml.safe_load(stream)
+
+    assert isinstance(data['num_strings'], int)
+    assert isinstance(data['number_of_frets'], int)
+    assert isinstance(data['long_scale_length'], float)
+    assert isinstance(data['short_scale_length'], float)
+    assert isinstance(data['neutral_fret'], int)
+    assert isinstance(data['string_spacing_at_nut'], float)
+    assert isinstance(data['string_spacing_at_bridge'], float)
+
+    return Config(
+        num_strings=data['num_strings'],
+        number_of_frets=data['number_of_frets'],
+        long_scale_length=data['long_scale_length'],
+        short_scale_length=data['short_scale_length'],
+        neutral_fret=data['neutral_fret'],
+        string_spacing_at_nut=data['string_spacing_at_nut'],
+        string_spacing_at_bridge=data['string_spacing_at_bridge']
+    )
+
 # Finds each fret's distance from fret 0 by iteratively applying the fret factor
 def get_fret_positions_along_string(config: Config, scale_length: float) -> np.array:
     fret_positions = [0]
@@ -61,15 +84,7 @@ def get_coordinates_for_scale(config: Config, is_long_scale: bool) -> np.array:
     return np.vstack((fret_positions, distances_from_centerline)).T
 
 def main():
-    config = Config(
-        num_strings=7,
-        long_scale_length=673.1,
-        short_scale_length=647.7,
-        number_of_frets=24,
-        neutral_fret=7,
-        string_spacing_at_nut=7.167,
-        string_spacing_at_bridge=10.5,
-    )
+    config = load_config()
 
     # Get all fret coordinates
     long_scale_coordinates = get_coordinates_for_scale(

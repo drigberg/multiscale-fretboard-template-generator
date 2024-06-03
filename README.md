@@ -1,6 +1,19 @@
 # multiscale-fretboard-template-generator
 
-A generator for multiscale guitar fretboard templates
+This repo contains a script for generating multiscale fret templates!
+
+## Output
+
+The script generates three templates:
+
+**Frets as lines, with outer strings:**
+![alt text](output/lines-with-strings.png)
+
+**Frets as lines, without strings:**
+![alt text](output/lines-without-strings.png)
+
+**String/fret intersection points:**
+![alt text](output/only-points.png)
 
 ## Usage
 
