@@ -16,9 +16,10 @@ A "multiscale" or "fan-fret" guitar is one where the strings have different leng
 ## What this script does
 
 1. Calculates the distance between each fret along the highest and lowest strings
-2. Offsets the high string according to which fret is configured to be "neutral", or at exactly 90 degrees
-2. Draws a center line so that the template can be aligned with the fretboard, for machining or by hand
-3. Exports three images: one with frets and strings, one with only frets, and one with dots at the position of each fret along the strings
+2. Calculates the position of the highest and lowest strings, according to the string spacing at the nut and bridge
+3. Offsets the high string according to which fret is configured to be "neutral", or at exactly 90 degrees
+4. Draws a center line so that the template can be aligned with the fretboard, for machining or by hand
+5. Exports three images: one with frets and strings, one with only frets, and one with dots at the position of each fret along the strings
 
 ## Usage
 
